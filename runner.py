@@ -39,7 +39,7 @@ class Runner(object):
         while os.path.isfile(name):
             vid+=1
             name = "{}_{}.mp4".format(self.recordName,vid)
-        writer = skvideo.io.FFmpegWriter(name)
+        writer = skvideo.io.FFmpegWriter(name, verbosity=1, outputdict={"-pix_fmt": "yuv420p"})
         for obs in self.recording:
             writer.writeFrame(obs)
         self.recording = []
@@ -91,7 +91,7 @@ class Runner(object):
                     # Reset local episode reward
                     self.episode_rewards[n] = 0
                     #Save current game as a video
-                    if self.record:
+                    if self.record and n % 500 < 15:
                         self.makevideo()
             # Discount rewards
             if dones[-1] == 0:

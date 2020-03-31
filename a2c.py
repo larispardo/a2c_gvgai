@@ -82,7 +82,7 @@ def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, tota
             return
 
     # Create parallel runner
-    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, render=render)
+    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, render=render, record_name="zelda01")
 
     # Training loop
     nbatch = nenvs*nsteps
