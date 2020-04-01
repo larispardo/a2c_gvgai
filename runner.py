@@ -2,6 +2,8 @@ import os
 import numpy as np
 import skvideo.io
 from baselines.a2c.utils import discount_with_dones
+from gym_minigrid import wrappers
+from gym import core
 
 
 class Runner(object):
@@ -77,6 +79,7 @@ class Runner(object):
         mb_masks = mb_dones[:, :-1]
         mb_dones = mb_dones[:, 1:]
         last_values = self.model.value(self.obs, self.states, self.dones).tolist()
+        c = 0
         #discount/bootstrap off value fn
         for n, (rewards, dones, value) in enumerate(zip(mb_rewards, mb_dones, last_values)):
             rewards = rewards.tolist()
@@ -91,7 +94,9 @@ class Runner(object):
                     # Reset local episode reward
                     self.episode_rewards[n] = 0
                     #Save current game as a video
-                    if self.record and n % 500 < 15:
+                    # Magic numbers!
+                    if self.record and c % 500 < 15 and len(self.recording) > 5:
+                        c+=1
                         self.makevideo()
             # Discount rewards
             if dones[-1] == 0:

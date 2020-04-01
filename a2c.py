@@ -82,7 +82,7 @@ def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, tota
             return
 
     # Create parallel runner
-    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, render=render, record_name="zelda01")
+    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, render=render, record_name=None)
 
     # Training loop
     nbatch = nenvs*nsteps
@@ -147,7 +147,7 @@ def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, tota
             logger.record_tabular("fps", fps)
             if level_selector is not None:
                 logger.record_tabular("difficulty", str(level_selector.get_info()))
-            logger.dump_tabular()
+            logger.dump_tabular() # here is where the print statement is done.
 
             # Log to file
             with open(log_file, "a") as myfile:
@@ -184,6 +184,7 @@ def main():
                         choices=[None] + LevelSelector.available, default=None)
     parser.add_argument('--render', action='store_true', default=False,
                         help='Render screen (default: False)')
+
     args = parser.parse_args()
 
     # Gym environment name
