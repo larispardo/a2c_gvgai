@@ -3,6 +3,7 @@ import tensorflow as tf
 import argparse
 import glob
 import random
+import math
 
 from model import Model
 from runner import Runner
@@ -19,7 +20,9 @@ from baselines.common import set_global_seeds
 from baselines.ppo2.policies import CnnPolicy, LstmPolicy, LnLstmPolicy
 
 
-def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, total_timesteps=int(80e6), vf_coef=0.5, ent_coef=0.01, max_grad_norm=0.5, lr=7e-4, lrschedule='linear', epsilon=1e-5, alpha=0.99, gamma=0.99, save_interval=25000, frame_skip=False, level_selector=None, render=False):
+def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, total_timesteps=int(80e6), vf_coef=0.5,
+          ent_coef=0.01, max_grad_norm=0.5, lr=7e-4, lrschedule='linear', epsilon=1e-5, alpha=0.99, gamma=0.99,
+          save_interval=25000, frame_skip=False, level_selector=None, render=False, diff=0):
     
     if seed is None:
         seed = random.randint(0, 10000000)
@@ -147,6 +150,8 @@ def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, tota
             logger.record_tabular("fps", fps)
             if level_selector is not None:
                 logger.record_tabular("difficulty", str(level_selector.get_info()))
+            else:
+                logger.record_tabular("difficulty", diff)
             logger.dump_tabular() # here is where the print statement is done.
 
             # Log to file
@@ -184,19 +189,21 @@ def main():
                         choices=[None] + LevelSelector.available, default=None)
     parser.add_argument('--render', action='store_true', default=False,
                         help='Render screen (default: False)')
+    parser.add_argument('--version', help='game version', type=int, default=0)
 
     args = parser.parse_args()
 
     # Gym environment name
-    env_id = "gvgai-" + args.game + "-lvl" + str(args.level) + "-v0"
-
+    env_id = "gvgai-" + args.game + "-lvl" + str(args.level) + "-v" + str(args.version)
+    difficulty = -1
     # Experiment name
     make_path("./results")
     experiment_name = args.game
     if args.selector is not None:
-        experiment_name += "-ls-" + args.selector
+        experiment_name += "-ls-" + args.selector + "-v" + str(args.version)
     else:
-        experiment_name += "-lvl-" + str(args.level)
+        difficulty = math.ceil((args.level + args.version * 5)/2)
+        experiment_name += "-lvl-" + str(args.level) + "-v" + str(args.version)
     make_path("./results/" + experiment_name)
 
     for i in range(args.repetitions):
@@ -241,7 +248,8 @@ def main():
               frame_skip=False,
               save_interval=args.save_interval,
               level_selector=level_selector,
-              render=args.render)
+              render=args.render,
+              diff=difficulty)
 
         env.close()
 

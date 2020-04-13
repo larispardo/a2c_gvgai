@@ -128,32 +128,37 @@ def plot_mixed(path, title, titles, datasets, smooth=10, fontsize=14):
     fig.savefig(os.path.join(path, title + '.pdf'))
 
 
-def plot(path, title, data, smooth=10, fontsize=14, multiple=False):
+def plot(path, title, data, smooth=10, plotty='' ,fontsize=14, multiple=False):
     print(title)
 
     color = '#1f77b4'
     color_d = '#d62728'
 
     fig, ax1 = plt.subplots()
-
+    if plotty == '_loss':
+        features = [8,9]
+    else:
+        features = [3,7]
     ax1.ticklabel_format(axis='x', style='sci', scilimits=(0, 4))
     label = "A2C"
-
+    dataHeader = ['episodes', 'steps', 'frames', 'mean_score', 'std_score', 'min_score', 'max_score',
+                  'difficulty', 'policy_loss', 'value_loss', 'episode_length', 'fps']
+    axisVals = [dataHeader[features[0]],dataHeader[features[1]]]
     # Create datapoints
     points = []
     if multiple:
         for d in data:
             for point in d:
                 if len(point) < 8:
-                    points.append(DataPoint(point[2], point[3]))
+                    points.append(DataPoint(point[2], point[features[0]]))
                 else:
-                    points.append(DataPoint(point[2], point[3], d=point[7]))
+                    points.append(DataPoint(point[2], point[features[0]], d=point[features[1]]))
     else:
         for point in data:
             if len(point) < 8:
-                points.append(DataPoint(point[2], point[3]))
+                points.append(DataPoint(point[2], point[features[0]]))
             else:
-                points.append(DataPoint(point[2], point[3], d=point[7]))
+                points.append(DataPoint(point[2], point[features[0]], d=point[features[1]]))
 
     # Sort data points
     points.sort(key=lambda x: x.x, reverse=False)
@@ -172,7 +177,7 @@ def plot(path, title, data, smooth=10, fontsize=14, multiple=False):
     for point in points:
         step_x.append(point.x)
         step_y.append(point.y)
-        if len(x) == 0 and smooth > 1 and False:
+        if len(x) == 0 and smooth > 1 and False:  # FIXME: False
             x.append(point.x)
             y.append(point.y)
             ymin.append(point.y)
@@ -193,31 +198,33 @@ def plot(path, title, data, smooth=10, fontsize=14, multiple=False):
                 dmin.append(mean_d - std_dev_d)
                 dmax.append(mean_d + std_dev_d)
             y.append(mean_y)
-            x.append(mean_x)
+            x.append(mean_x)  # Interesting that this is just an approximation
             std_dev = np.std(step_y)
-            ymin.append(mean_y - std_dev)
+            ymin.append(mean_y - std_dev)  # Assume normality
             ymax.append(mean_y + std_dev)
             step_x.clear()
             step_y.clear()
             step_d.clear()
 
-    lns1 = ax1.plot(x, y, linewidth=1, color=color, label="Score")
+    lns1 = ax1.plot(x, y, linewidth=1, color=color, label=axisVals[0])
     lns = lns1
     ax1.fill_between(x, ymax, ymin, color=color, alpha=0.3)
     ax2 = None
     ylabel_color = 'black'
     if len(d) > 0:
         ax2 = ax1.twinx()
-        lns2 = ax2.plot(x, d, linewidth=1, color=color_d, label="Difficulty")
+        lns2 = ax2.plot(x, d, linewidth=1, color=color_d, label=axisVals[1])
+        if plotty == '_loss':
+            ax2.fill_between(x, dmax, dmin, color=color_d, alpha=0.3)
         lns += lns2
-        ax2.set_ylabel('Difficulty', color=color_d)
+        ax2.set_ylabel(axisVals[1], color=color_d)
         ylabel_color = color
-        ax2.set_ylim([0, 1])
+        #ax2.set_ylim([0, 1])
         #ax2.axis('off')
         ax2.grid(False)
         #ax1.fill_between(x, dmax, dmin, color=color_d, alpha=0.3)
     plt.title(title, fontsize=fontsize)
-    ax1.set_ylabel('Score', color=ylabel_color)
+    ax1.set_ylabel(axisVals[0], color=ylabel_color)
     ax1.set_xlabel('Steps')
 
     labs = [l.get_label() for l in lns]
@@ -227,15 +234,15 @@ def plot(path, title, data, smooth=10, fontsize=14, multiple=False):
     #handles, labels = plt.get_legend_handles_labels()
     #plt.legend(handles, labels, loc='upper center', ncol=2, fontsize=fontsize)
     fig.tight_layout()
-    fig.savefig(os.path.join(path, title + '.pdf'))
-
+    fig.savefig(os.path.join(path, title + plotty + '.pdf'))
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--smooth', help='How many points to smooth', type=int, default=10)
     parser.add_argument('--font-size', help='Font size on plots', type=int, default=14)
     args = parser.parse_args()
-
+    dataHeader = ['episodes', 'steps', 'frames', 'mean_score', 'std_score', 'min_score', 'max_score',
+                  'difficulty', 'policy_loss', 'value_loss', 'episode_length', 'fps']
     # Main plot for each experiment
     for experiment_folder in glob.iglob('./results/*/'):
         title = experiment_folder.split('/')[-2].replace('-', ' ').title()
@@ -249,7 +256,7 @@ def main():
             experiment_data = load(experiment_log)
             experiment_title = title + " " + str(i)
             data.append(experiment_data)
-            plot(path, experiment_title, experiment_data, smooth=args.smooth, fontsize=args.font_size, multiple=False)
+            plot(path, experiment_title, experiment_data, plotty='_loss', smooth=args.smooth, fontsize=args.font_size, multiple=False)
             plt.clf()
         plot(path, title, data, smooth=args.smooth, fontsize=args.font_size, multiple=True)
         plt.clf()
