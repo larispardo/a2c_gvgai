@@ -9,6 +9,7 @@ from model import Model
 from runner import Runner
 from env import *
 from level_selector import *
+import sys
 
 
 import uuid
@@ -31,21 +32,25 @@ def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, tota
     set_global_seeds(seed)
 
     # Check if experiment_id exists - then continue
-    model_path = './results/' + experiment_name + '/models/'
+    if sys.platform.startswith('win'):
+        sep = '\\'
+    else:
+        sep = '/'
+    model_path = '.' + sep + 'results' + sep + experiment_name + sep + 'models' + sep
     steps = 0
     resume = False
-    for model_folder in glob.iglob(model_path + '*/'):
+    for model_folder in glob.iglob(model_path + '*' + sep):
 
         # Experiment id
-        id = model_folder.split('/')[-2]
+        id = model_folder.split(sep)[-2]
 
         if id != experiment_id:
             continue
 
         # Find number of steps for last model
-        for model_meta_name in glob.iglob(model_folder + '/*.meta'):
+        for model_meta_name in glob.iglob(model_folder + sep + '*.meta'):
             resume = True
-            s = int(model_meta_name.split('.meta')[0].split('/')[-1].split("-")[1])
+            s = int(model_meta_name.split('.meta')[0].split(sep)[-1].split("-")[1])
             if s >= steps:
                 steps = s
     if resume:
@@ -159,6 +164,8 @@ def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, tota
                 dif = ""
                 if level_selector is not None:
                     dif = str(level_selector.get_info())
+                else:
+                    dif = str(diff)
                 line = str(episodes) + ";" + str(steps) + ";" + str(frames) + ";" + str(mean_score) + ";" + str(std_score) + ";" + str(min_score) + ";" + str(max_score) + ";" + dif + ";" + str(policy_loss) + ";" + str(value_loss) + ";" + str(frames_per_episode) + ";" + str(fps) + ";" + "\n"
                 myfile.write(line)
 
