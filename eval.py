@@ -5,7 +5,7 @@ from level_selector import *
 from model import Model
 from runner import Runner
 from env import *
-
+import sys
 from baselines.a2c.utils import make_path
 from baselines.a2c.policies import CnnPolicy
 
@@ -26,17 +26,17 @@ def eval(model, env, nsteps=5, runs=100, render=False, record_name=None, level_s
 
     return scores
 
-def test_on(game, level, selector, experiment_name, experiment_id, policy, num_envs=1, seed=0, runs=100, render=False, record_path=None, save_results=True, model_steps=-1):
+def test_on(game, level, selector, experiment_name, experiment_id, policy, version, num_envs=1, seed=0, runs=100, render=False, record_path=None, save_results=True, model_steps=-1):
 
     # Environment name
-    env_id = "gvgai-" + game + "-lvl" + str(level) + "-v0"
+    env_id = "gvgai-" + game + "-lvl" + str(level) + "-v" + str(version)
 
     # Test name
     test_name = game
     if selector is not None:
         test_name += "-ls-" + selector
     else:
-        test_name += "-lvl-" + str(level)
+        test_name += "-lvl-" + str(level) + "-v" + str(version)
 
     print("Test name: " + test_name)
     print('Training name: ' + experiment_name)
@@ -57,17 +57,21 @@ def test_on(game, level, selector, experiment_name, experiment_id, policy, num_e
     level_selector = LevelSelector.get_selector(selector, game, level_path, max=runs)
 
     env = make_gvgai_env(env_id, num_envs, seed, level_selector=level_selector)
-
+    if sys.platform.startswith('win'):
+        sep = '\\'
+    else:
+        sep = '/'
     # Main plots per experiment
     mean_scores = []
     std_scores = []
-    model_folder = './results/' + experiment_name + '/models/' + experiment_id + "/"
+    model_folder = '.' + sep + 'results' + sep + experiment_name + sep + \
+                   'models' + sep + experiment_id + "/"
 
     # Find number of steps for last model
     if model_steps < 0:
         for model_meta_name in glob.iglob(model_folder + '*.meta'):
             print(model_meta_name)
-            s = int(model_meta_name.split('.meta')[0].split('/')[-1].split("-")[1])
+            s = int(model_meta_name.split('.meta')[0].split(sep)[-1].split("-")[1])
             print(s)
             if s > model_steps:
                 model_steps = s
@@ -153,12 +157,14 @@ def main():
                         help='Render screen (default: False)')
     parser.add_argument('--no-save', action='store_true',
                         help='Disable result saving (default: False)')
+    parser.add_argument('--version', help='game version', type=int, default=0)
 
     args = parser.parse_args()
 
     test_on(args.game,
             args.level,
             args.selector,
+            version=args.version,
             experiment_name=args.experiment_name,
             experiment_id=args.experiment_id,
             policy=args.policy,

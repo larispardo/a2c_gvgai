@@ -159,7 +159,8 @@ class SequentialSelector(LevelSelector):
     def __init__(self, dir, game, difficulty, max=max):
         super().__init__(dir, game, max=max)
         self.difficulty = difficulty
-        path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + game + "/" + str(int(difficulty * 10)) + "/"
+        path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + \
+               game + "/" + str(int(difficulty * 10)) + "/"
         self.levels = [filename for filename in glob.iglob(path + '*')]
         self.idx = 0
         self.n = 0
