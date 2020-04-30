@@ -208,6 +208,8 @@ def main():
     experiment_name = args.game
     if args.selector is not None:
         experiment_name += "-ls-" + args.selector + "-v" + str(args.version)
+        if args.selector == "pcg-progressive-rules":
+            env_id = "gvgai-" + args.game + "-lvl" + str(args.level) + "-v" + str(args.version) ## ALWAYS Start this selector at game number 1
     else:
         difficulty = math.ceil((args.level + args.version * 5)/2)
         experiment_name += "-lvl-" + str(args.level) + "-v" + str(args.version)

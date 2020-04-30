@@ -9,7 +9,6 @@ from shutil import copyfile
 
 
 class LevelSelector(object):
-
     available = ['ab-test',
                  'random-all',
                  'random-0123',
@@ -53,13 +52,16 @@ class LevelSelector(object):
                  'pcg-random-9',
                  'pcg-random-10',
                  'pcg-progressive',
-                 'pcg-progressive-fixed']
+                 'pcg-progressive-fixed',
+                 'pcg-progressive-rules']
 
     @staticmethod
     def get_selector(selector_name, game, path, fixed=False, max=-1):
 
         # Register classes for sharing across procs
-        for c in [RandomSelector, RandomWithDifSelector, SequentialHumanLevelSelector, RandomPCGSelector, RandomWithDifPCGSelector, ProgressivePCGSelector, SequentialSelector, ABTestSelector]:
+        for c in [RandomSelector, RandomWithDifSelector, SequentialHumanLevelSelector, RandomPCGSelector,
+                  RandomWithDifPCGSelector, ProgressivePCGSelector, SequentialSelector, ABTestSelector,
+                  ProgressivePCGLVLandRULESelector]:
             BaseManager.register(c.__name__, c)
         manager = BaseManager()
         manager.start()
@@ -92,6 +94,9 @@ class LevelSelector(object):
                 selector = manager.ProgressivePCGSelector(path, game, max=max)
             elif selector_name == "pcg-progressive-fixed":
                 selector = manager.ProgressivePCGSelector(path, game, upper_limit=False, max=max)
+            elif selector_name == "pcg-progressive-rules":
+                selector = manager.ProgressivePCGLVLandRULESelector(path, game, selector=selector_name, folder=5,
+                                                                    max=max, gameNumber=1)
             else:
                 raise Exception("Unknown level selector: + " + selector_name)
         else:
@@ -125,12 +130,13 @@ class LevelSelector(object):
     def get_info(self):
         raise NotImplementedError
 
+
 game_sizes = {
     "aliens": [30, 11],
     "zelda": [13, 9],
     "boulderdash": [26, 13],
     "frogs": [28, 11],
-    "solarfox": [10,11]
+    "solarfox": [10, 11]
 }
 
 
@@ -138,7 +144,9 @@ class SequentialHumanLevelSelector(LevelSelector):
 
     def __init__(self, dir, game, level_id, max=max):
         super().__init__(dir, game, max=max)
-        self.level = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + game + "/human/" + game + "_lvl" + str(level_id) + ".txt"
+        self.level = os.path.dirname(
+            os.path.realpath(__file__)) + "/data/test-levels/" + game + "/human/" + game + "_lvl" + str(
+            level_id) + ".txt"
         self.n = 0
 
     def get_level(self):
@@ -162,19 +170,20 @@ class SequentialSelector(LevelSelector):
         path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + \
                game + "/" + str(int(difficulty * 10)) + "/"
         self.levels = [filename for filename in glob.iglob(path + '*')]
+        self.levels.sort()
         self.idx = 0
         self.n = 0
 
     def get_level(self):
         if self.n >= self.max > 0:
-            #print("Level selector returning None")
+            # print("Level selector returning None")
             return None
         level = self.levels[self.idx]
         self.idx = self.idx + 1
         if self.idx >= len(self.levels):
             self.idx = 0
         self.n += 1
-        #print("Level {}/{}".format(self.n, self.max))
+        # print("Level {}/{}".format(self.n, self.max))
         return level
 
     def report(self, level_id, win):
@@ -182,6 +191,7 @@ class SequentialSelector(LevelSelector):
 
     def get_info(self):
         return ""
+
 
 class ABTestSelector(LevelSelector):
 
@@ -210,6 +220,7 @@ class ABTestSelector(LevelSelector):
     def get_info(self):
         return ""
 
+
 class RandomSelector(LevelSelector):
 
     def __init__(self, dir, game, lvl_ids, max=max):
@@ -232,7 +243,8 @@ class RandomWithDifSelector(LevelSelector):
     def __init__(self, dir, game, difficulty, max=max):
         super().__init__(dir, game, max=max)
         self.difficulty = difficulty
-        path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + game + "/" + str(int(difficulty * 10)) + "/"
+        path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + game + "/" + str(
+            int(difficulty * 10)) + "/"
         self.levels = [filename for filename in glob.iglob(path + '*')]
 
     def get_level(self):
@@ -289,6 +301,7 @@ class ProgressivePCGSelector(LevelSelector):
     '''
     TODO: Shared object across workers.
     '''
+
     def __init__(self, dir, game, alpha=0.01, upper_limit=True, max=max):
         super().__init__(dir, game, max=max)
         size = game_sizes[game]
@@ -312,3 +325,86 @@ class ProgressivePCGSelector(LevelSelector):
 
     def get_info(self):
         return str(self.difficulty)
+
+
+class ProgressivePCGLVLandRULESelector(LevelSelector):
+    '''
+    TODO: Shared object across workers.
+    '''
+
+    def __init__(self, dir, game, folder, selector, difficulty=0, max=max, gameNumber=1):
+        import CreateGame
+        super().__init__(dir, game, max=max)
+        self.difficulty = difficulty
+        self.maxDifficulty = 5
+        self.wins = 0
+        self.changeGameWRate = 0.0
+        self.changeDiffWRate = 0.6
+        self.gameNumber = gameNumber
+        self.folder = folder
+        self.gameName = game
+        self.gameChanged = False
+        self.selector = selector
+        path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + \
+               self.gameName + "/" + str(int(self.folder)) + "/"
+        CreateGame.CreateGame(self.difficulty, self.gameNumber, folder=self.folder, gameName=self.gameName)
+        self.levels = [filename for filename in glob.iglob(path + '*')]
+        self.levels.sort()
+        self.idx = 0
+        self.n = 0
+
+    def get_level(self):
+        if self.n >= self.max > 0:
+            # print("Level selector returning None")
+            return None
+        if self.idx >= len(self.levels):
+            import CreateGame
+            self.gameChanged = False
+            if self.change_game():
+                self.gameChanged = True
+                if self.addDifficultyRules():
+                    self.difficulty = min(self.maxDifficulty, self.difficulty + 1)
+                self.gameNumber += 1
+                path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + \
+                       self.gameName + "/" + str(int(self.folder)) + "/"
+                import shutil
+                for f in self.levels:
+                    lvlspath = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + \
+                               self.gameName + "/levels/"
+                    try:
+                        os.mkdir(lvlspath)
+                    except FileExistsError:
+                        print("Directory ", lvlspath, " already exists")
+                    shutil.move(f, lvlspath)
+                CreateGame.CreateGame(self.difficulty, self.gameNumber, folder=self.folder, gameName=self.game)
+                self.levels = [filename for filename in glob.iglob(path + '*')]
+                self.levels.sort()
+            self.idx = 0
+        else:
+            self.gameChanged = False
+        level = self.levels[self.idx]
+        self.idx = self.idx + 1
+
+        self.n += 1
+        return level
+
+    def report(self, level_id, win):
+        if win:
+            self.wins += 1
+
+    def get_info(self):
+        return self.selector
+
+    def change_game(self):
+        winRate = self.wins / len(self.levels)
+        return winRate > self.changeGameWRate
+
+    def get_gameNumber(self):
+        return self.gameNumber
+
+    def get_ifgameChanged(self):
+        return self.gameChanged
+
+    def addDifficultyRules(self):
+        winRate = self.wins / len(self.levels)
+        return winRate > self.changeDiffWRate

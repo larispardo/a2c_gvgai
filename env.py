@@ -1,11 +1,11 @@
 import os
-import gym_gvgai
 from multiprocessing import Process, Pipe
 from baselines.common.vec_env import VecEnv, CloudpickleWrapper
 from baselines import logger
 from baselines.common.atari_wrappers import *
 from baselines.common import set_global_seeds
 from baselines.bench import Monitor
+
 
 
 def worker(remote, parent_remote, env_fn_wrapper, level_selector=None):
@@ -33,6 +33,11 @@ def worker(remote, parent_remote, env_fn_wrapper, level_selector=None):
                         else:
                             level_selector.report(level, False if info['winner'] == 'PLAYER_LOSES' else True)
                         level = level_selector.get_level()
+                        if level_selector.get_info() == "pcg-progressive-rules":
+                            if level_selector.get_ifgameChanged():
+                                env_id = "gvgai-" + level_selector.get_game() + "-lvl0-v0"
+                                env.close()
+                                env = gym.make(env_id)
                         if level is not None:
                             env.unwrapped._setLevel(level)
                         else:
@@ -148,6 +153,7 @@ def wrap_gvgai(env, frame_stack=False, scale=False, clip_rewards=False, noop_res
 def make_gvgai_env(env_id, num_env, seed, start_index=0, level_selector=None):
     def make_env(rank): # pylint: disable=C0111
         def _thunk():
+            import gym_gvgai
             env = gym.make(env_id)
             env.seed(seed + rank)
             env = Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
