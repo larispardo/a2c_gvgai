@@ -172,6 +172,8 @@ class SequentialSelector(LevelSelector):
         self.levels = [filename for filename in glob.iglob(path + '*')]
         self.levels.sort()
         self.idx = 0
+        self.initSteps = 88
+        self.steps = 88
         self.n = 0
 
     def get_level(self):
@@ -179,7 +181,10 @@ class SequentialSelector(LevelSelector):
             # print("Level selector returning None")
             return None
         level = self.levels[self.idx]
-        self.idx = self.idx + 1
+        if self.n > self.steps:
+            self.idx = self.idx + 1
+            self.steps += self.initSteps
+            print("The amount of steps for next change is:", self.n,self.steps, self.idx)
         if self.idx >= len(self.levels):
             self.idx = 0
         self.n += 1
@@ -334,6 +339,11 @@ class ProgressivePCGLVLandRULESelector(LevelSelector):
 
     def __init__(self, dir, game, folder, selector, difficulty=0, max=max, gameNumber=1):
         import CreateGame
+        import sys
+        if sys.platform.startswith('win'):
+            self.sep = '\\'
+        else:
+            self.sep = '/'
         super().__init__(dir, game, max=max)
         self.difficulty = difficulty
         self.maxDifficulty = 5
@@ -345,8 +355,9 @@ class ProgressivePCGLVLandRULESelector(LevelSelector):
         self.gameName = game
         self.gameChanged = False
         self.selector = selector
-        path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + \
-               self.gameName + "/" + str(int(self.folder)) + "/"
+        path = os.path.dirname(os.path.realpath(__file__)) + self.sep + "data" + self.sep + \
+               "test-levels" + self.sep + \
+               self.gameName + self.sep + str(int(self.folder)) + self.sep
         CreateGame.CreateGame(self.difficulty, self.gameNumber, folder=self.folder, gameName=self.gameName)
         self.levels = [filename for filename in glob.iglob(path + '*')]
         self.levels.sort()
@@ -365,8 +376,9 @@ class ProgressivePCGLVLandRULESelector(LevelSelector):
                 if self.addDifficultyRules():
                     self.difficulty = min(self.maxDifficulty, self.difficulty + 1)
                 self.gameNumber += 1
-                path = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + \
-                       self.gameName + "/" + str(int(self.folder)) + "/"
+                path = os.path.dirname(os.path.realpath(__file__)) + self.sep + "data" + self.sep + \
+                       "test-levels" + self.sep + \
+                       self.gameName + self.sep + str(int(self.folder)) + self.sep
                 import shutil
                 for f in self.levels:
                     lvlspath = os.path.dirname(os.path.realpath(__file__)) + "/data/test-levels/" + \

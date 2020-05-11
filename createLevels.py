@@ -1,6 +1,6 @@
 import numpy as np
 
-def GetDifficultyParameters(difficulty, gridSize, isGoal):
+def GetDifficultyParameters(difficulty, gridSize, isGoal, res):
     import math
     maxTreasures = 4
     # TODO: 18 is assuming the grid is 20 by 20
@@ -11,7 +11,7 @@ def GetDifficultyParameters(difficulty, gridSize, isGoal):
     else:
         enemyAmount = 1 + difficulty + math.floor(np.random.random()*difficulty)
     # TODO: replace Magic numbers with resource amount
-    resourceAmount = 5 + (5-round(difficulty*np.random.random()))
+    resourceAmount = res + (5-round(difficulty*np.random.random()))
     treasuresAmount = np.random.randint(maxTreasures)
     return width, height, enemyAmount, resourceAmount, treasuresAmount
 

@@ -10,8 +10,8 @@ import createRules
 '''
 
 
-def CreateGame(difficulty, gameNumber, probabilityTreasures = 0.1, probabilityGoal = 0.8, probResourceGGoal = 0.2,
-               selector_levs = True, lvls = 2, folder = 5, gameName = 'thesis0'):
+def CreateGame(difficulty, gameNumber, probabilityTreasures = 0, probabilityGoal = 0.8, probResourceGGoal = 0.2,
+               selector_levs = True, lvls = 50 , folder = 5, gameName = 'thesis0'):
     spriteSet = {'floor': 'floor > Immovable img=newset/floor2 hidden=True',
                  'sword': 'sword > OrientedFlicker limit=5 singleton=True img=oryx/slash1',
                  # Limit refers how long it stays in game.
@@ -71,6 +71,7 @@ def CreateGame(difficulty, gameNumber, probabilityTreasures = 0.1, probabilityGo
     isResource = False
     isMissile = False
     isTreasure = False
+    goalR = 0
     if np.random.random() < probabilityGoal:
         isGoal = True
         gameSprites += ['goal']
@@ -116,16 +117,14 @@ def CreateGame(difficulty, gameNumber, probabilityTreasures = 0.1, probabilityGo
 
     if sys.platform.startswith('win'):
         gamesPath = 'C:\\Users\\Lenovo\\Envs\\thesis1\\Lib\\site-packages\\gym_gvgai\\envs\\games\\'
-        if selector_levs:
-            testPath = 'C:\\Users\\Lenovo\\Documents\\Master\\Thesis\\a2c_gvgai\\data\\test-levels\\'
+
     else:
         gamesPath = "/Users/larispardo/Downloads/GVGAI_GYM/gym_gvgai/envs/games/"
-        if selector_levs:
-            testPath = '/Users/larispardo/Documents/Master/Thesis/a2c_gvgai/data/test-levels/'
 
     if selector_levs:
-
-        path01 = testPath + gameName + '/' + str(folder) + '/'
+        testPath = os.path.dirname(os.path.realpath(__file__)) + '/' + "data" + '/' + \
+                   "test-levels"
+        path01 = testPath + '/' + gameName + '/' + str(folder) + '/'
         path02 = gamesPath + gameName + "_v" + str(version) + "/"
     else:
         path01 = gamesPath + gameName + "_v" + str(version) + "/"
@@ -143,7 +142,7 @@ def CreateGame(difficulty, gameNumber, probabilityTreasures = 0.1, probabilityGo
     except FileExistsError:
         print("Directory ", path02, " already exists")
     if selector_levs:
-        rulepath = testPath + gameName +'/gamerules/'
+        rulepath = testPath + '/' + gameName +'/gamerules/'
         try:
             os.makedirs(rulepath)
             print("Directory ", rulepath, " Created ")
@@ -173,7 +172,8 @@ def CreateGame(difficulty, gameNumber, probabilityTreasures = 0.1, probabilityGo
         for i in range(lvls):
             width, height, enemyAmount, resourceAmount, treasuresAmount = createLevels.GetDifficultyParameters(round(i / (lvls/5)),
                                                                                                                gridSize=gridSize,
-                                                                                                               isGoal=isGoal)
+                                                                                                               isGoal=isGoal,
+                                                                                                               res=goalR)
             level = createLevels.CreateLevel(gridSize, width, height, enemyAmount, resourceAmount,
                                              treasuresAmount, levelMap=levelMap, gridSize=gridSize,
                                              enemyTypes=enemyTy, isGoal=isGoal, isResource=isResource, isTreasure=isTreasure)
@@ -186,7 +186,8 @@ def CreateGame(difficulty, gameNumber, probabilityTreasures = 0.1, probabilityGo
         for i in range(lvls):
             width, height, enemyAmount, resourceAmount, treasuresAmount = createLevels.GetDifficultyParameters(round(i / 2),
                                                                                                                gridSize=gridSize,
-                                                                                                               isGoal=isGoal)
+                                                                                                               isGoal=isGoal,
+                                                                                                               res=goalR)
             level = createLevels.CreateLevel(gridSize, width, height, enemyAmount, resourceAmount,
                                              treasuresAmount, levelMap=levelMap, gridSize=gridSize,
                                              enemyTypes=enemyTy, isGoal=isGoal, isResource=isResource, isTreasure=isTreasure)
