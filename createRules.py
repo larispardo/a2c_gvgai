@@ -57,6 +57,12 @@ def SelectEnemyTypes(types, amount, isGoal, isMissile, difficulty, gameInteracti
             key = 'enwa' + str(i + 1)
             interactionSet[key] = 'enemy' + str(i + 1) + ' wall > reverseDirection'
             gameInteractions += [key]
+        elif ty == 'Chaser':  # Now redundant, but could help to keep track of all variable types.
+            cooldown = 16
+            typeVariables += [[('stype', 'avatar'),('cooldown', cooldown),('cons', 12)]]
+            key = 'enwa' + str(i + 1)
+            interactionSet[key] = 'enemy' + str(i + 1) + ' wall > stepBack'
+            gameInteractions += [key]
     return gametypes, typeVariables
 
 

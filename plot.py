@@ -9,7 +9,7 @@ from time import sleep
 import glob
 import os
 import argparse
-
+import sys
 from baselines.a2c.utils import make_path
 
 plt.style.use('ggplot')
@@ -32,7 +32,7 @@ def load(filename):
                     i += 1
                     continue
                 d = line.strip().split(";")
-                d = [1 if x == '' else x for x in d]
+                d = [1 if x == '' or x == 'pcg-progressive-rules' else x for x in d]
                 data.append(np.array(d).astype(np.float))
             except Exception as e:
                 print("Line ignored", e)
@@ -244,8 +244,12 @@ def main():
     dataHeader = ['episodes', 'steps', 'frames', 'mean_score', 'std_score', 'min_score', 'max_score',
                   'difficulty', 'policy_loss', 'value_loss', 'episode_length', 'fps']
     # Main plot for each experiment
+    if sys.platform.startswith('win'):
+        sep = '\\'
+    else:
+        sep = '/'
     for experiment_folder in glob.iglob('./results/*/'):
-        title = experiment_folder.split('/')[-2].replace('-', ' ').title()
+        title = experiment_folder.split(sep)[-2].replace('-', ' ').title()
         title = title.replace('Pcg', 'PCG').replace('Ls ', '')
         path = os.path.join(experiment_folder, 'plots/')
         make_path(path)
@@ -258,7 +262,7 @@ def main():
             data.append(experiment_data)
             plot(path, experiment_title, experiment_data, plotty='_loss', smooth=args.smooth, fontsize=args.font_size, multiple=False)
             plt.clf()
-        plot(path, title, data, smooth=args.smooth, fontsize=args.font_size, multiple=True)
+        plot(path, title, data, plotty='', smooth=args.smooth, fontsize=args.font_size, multiple=True)
         plt.clf()
 
     # Mixed plot for each experiment

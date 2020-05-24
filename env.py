@@ -33,7 +33,7 @@ def worker(remote, parent_remote, env_fn_wrapper, level_selector=None):
                         else:
                             level_selector.report(level, False if info['winner'] == 'PLAYER_LOSES' else True)
                         level = level_selector.get_level()
-                        if level_selector.get_info() == "pcg-progressive-rules":
+                        if level_selector.get_selectorname() == "pcg-progressive-rules":
                             if level_selector.get_ifgameChanged():
                                 env_id = "gvgai-" + level_selector.get_game() + "-lvl0-v0"
                                 env.close()
