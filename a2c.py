@@ -116,7 +116,18 @@ def learn(policy, env, experiment_name, experiment_id, seed=None, nsteps=5, tota
 
     last_frames = 0
     for update in range(start_update, total_timesteps//nbatch+1):
-        obs, states, rewards, masks, actions, values = runner.run()
+        try:
+            obs, states, rewards, masks, actions, values = runner.run()
+        except Exception as e:
+            env_id = "gvgai-" + level_selector.get_game() + "-lvl0-v0"
+            env.close()
+            env = make_gvgai_env(env_id=env_id,
+                                 num_env=10,
+                                 seed=0,
+                                 level_selector=level_selector)
+            print("Jumping an epoch")
+            print(e)
+            continue
 
         policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
         nseconds = time.time()-tstart

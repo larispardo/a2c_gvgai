@@ -352,8 +352,8 @@ class ProgressivePCGLVLandRULESelector(LevelSelector):
         self.difficulty = difficulty
         self.maxDifficulty = 5
         self.wins = 0
-        self.changeGameWRate = 0.3
-        self.changeDiffWRate = 0.6
+        self.changeGameWRate = 0.035
+        self.changeDiffWRate = 0.045
         self.gameNumber = gameNumber
         self.folder = folder
         self.gameName = game
@@ -374,9 +374,10 @@ class ProgressivePCGLVLandRULESelector(LevelSelector):
         if self.idx >= len(self.levels):
             import CreateGame
             self.gameChanged = False
+            self.idx = 0
             if self.change_game():
+                print("game changed.")
                 self.gameChanged = True
-                self.wins = 0
                 if self.addDifficultyRules():
                     self.difficulty = min(self.maxDifficulty, self.difficulty + 1)
                 self.gameNumber += 1
@@ -395,10 +396,11 @@ class ProgressivePCGLVLandRULESelector(LevelSelector):
                 CreateGame.CreateGame(self.difficulty, self.gameNumber, folder=self.folder, gameName=self.game)
                 self.levels = [filename for filename in glob.iglob(path + '*')]
                 self.levels.sort()
-            self.idx = 0
+            self.wins = 0
         else:
             self.gameChanged = False
         level = self.levels[self.idx]
+        print("game", self.idx, "is being played", level)
         self.idx = self.idx + 1
         self.n += 1
         return level
@@ -411,7 +413,8 @@ class ProgressivePCGLVLandRULESelector(LevelSelector):
         return self.gameNumber
 
     def change_game(self):
-        winRate = self.wins / len(self.levels)
+        winRate = self.wins / len(self.levels) / 10
+        print('The winrate is:', winRate, self.wins, len(self.levels))
         return winRate > self.changeGameWRate
 
     def get_gameNumber(self):
@@ -421,5 +424,5 @@ class ProgressivePCGLVLandRULESelector(LevelSelector):
         return self.gameChanged
 
     def addDifficultyRules(self):
-        winRate = self.wins / len(self.levels)
+        winRate = self.wins / len(self.levels) / 10
         return winRate > self.changeDiffWRate

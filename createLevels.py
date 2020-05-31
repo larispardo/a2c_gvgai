@@ -83,7 +83,7 @@ def GetPositions(amount, vpos, hpos, goPos, level, keyVals, gridSize, levelMap):
                 continue
             elif len(goPos) != 0:
                 if goPos[0][0] - 1 <= pos[0] <= goPos[0][0] + 1 and goPos[0][1] - 1 <= pos[1] <= goPos[0][1] + 1:
-                    print(pos, goPos[0])
+                    #print(pos, goPos[0])
                     # This assumes that the avatar position is in gpos[0] and
                     # is to make the avatar do not have items in a surrounding square.
                     vtmp = np.random.choice(vpos, size=1)[0]
@@ -100,8 +100,11 @@ def GetPositions(amount, vpos, hpos, goPos, level, keyVals, gridSize, levelMap):
     return positions
 
 
-def WriteLevel(level, path="", game="thesis0", lvl = 0):
-    file = path + game + "_lvl" + str(lvl) + ".txt"
+def WriteLevel(level, path="", game="thesis0", lvl = 0, change = True):
+    if lvl < 10 and change:
+        file = path + game + "_lvl0" + str(lvl) + ".txt"
+    else:
+        file = path + game + "_lvl" + str(lvl) + ".txt"
     f = open(file, "w+")
     f.write(''.join(level))
     f.close()

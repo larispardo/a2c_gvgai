@@ -179,7 +179,7 @@ def CreateGame(difficulty, gameNumber, probabilityTreasures = 0, probabilityGoal
                                              enemyTypes=enemyTy, isGoal=isGoal, isResource=isResource, isTreasure=isTreasure)
             createLevels.WriteLevel(level, game=gameName+str(gameNumber), lvl=i, path=path01)
             if i == 0:
-                createLevels.WriteLevel(level, game=gameName, lvl=i % 5, path=path02)
+                createLevels.WriteLevel(level, game=gameName, lvl=i % 5, path=path02, change = False)
     else:
         ## TODO: This is overriding variable
         lvls = 10

@@ -133,7 +133,7 @@ def plot(path, title, data, smooth=10, plotty='' ,fontsize=14, multiple=False):
 
     color = '#1f77b4'
     color_d = '#d62728'
-
+    wantsvlines = False
     fig, ax1 = plt.subplots()
     if plotty == '_loss':
         features = [8,9]
@@ -146,6 +146,7 @@ def plot(path, title, data, smooth=10, plotty='' ,fontsize=14, multiple=False):
     axisVals = [dataHeader[features[0]],dataHeader[features[1]]]
     # Create datapoints
     points = []
+    cuts = []
     if multiple:
         for d in data:
             for point in d:
@@ -155,6 +156,8 @@ def plot(path, title, data, smooth=10, plotty='' ,fontsize=14, multiple=False):
                     points.append(DataPoint(point[2], point[features[0]], d=point[features[1]]))
     else:
         for point in data:
+            if wantsvlines and point[0] % 50 == 0:
+                cuts.append(point[2])
             if len(point) < 8:
                 points.append(DataPoint(point[2], point[features[0]]))
             else:
@@ -215,6 +218,7 @@ def plot(path, title, data, smooth=10, plotty='' ,fontsize=14, multiple=False):
         ax2 = ax1.twinx()
         lns2 = ax2.plot(x, d, linewidth=1, color=color_d, label=axisVals[1])
         if plotty == '_loss':
+
             ax2.fill_between(x, dmax, dmin, color=color_d, alpha=0.3)
         lns += lns2
         ax2.set_ylabel(axisVals[1], color=color_d)
@@ -222,11 +226,14 @@ def plot(path, title, data, smooth=10, plotty='' ,fontsize=14, multiple=False):
         #ax2.set_ylim([0, 1])
         #ax2.axis('off')
         ax2.grid(False)
+
         #ax1.fill_between(x, dmax, dmin, color=color_d, alpha=0.3)
     plt.title(title, fontsize=fontsize)
     ax1.set_ylabel(axisVals[0], color=ylabel_color)
     ax1.set_xlabel('Steps')
 
+    for xc in cuts:
+        plt.axvline(x=xc, color = 'Black', linewidth=0.1)
     labs = [l.get_label() for l in lns]
     if ax2 is not None:
         ax1.legend(lns, labs, loc=0)

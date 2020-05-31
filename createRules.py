@@ -7,7 +7,7 @@ def SelectGame(games):
 
 def ChooseAmountEnemies(maximum=2, diff=0):
     import math
-    print(diff)
+    #print(diff)
     return min(maximum, math.floor(np.random.random() * diff)) + 1
 
 
@@ -95,13 +95,13 @@ def createRules(differentEnemies, avatarType, enemyTy, enemyVar, gameSprites,
                 elif value == 'enemy':
                     isEnemy = True
                     rules += space * 2 + spriteSet[value] + '\n'
-                print(value, possibleSlimeSprites, value in possibleSlimeSprites)
+                #print(value, possibleSlimeSprites, value in possibleSlimeSprites)
                 if (value in possibleSlimeSprites) and not isEnemy:
                     rules += space * 2 + spriteSet[value] + 'img=' + sprites.pop() + '\n'
                 elif isEnemy:
                     for i in range(1, differentEnemies + 1):
                         if enemyVar[i - 1][0] is not None:
-                            print("HERE: " + enemyTy[i - 1])
+                            #print("HERE: " + enemyTy[i - 1])
                             variables = [x[0] + '=' + str(x[1]) for x in enemyVar[i - 1]]
                             variables = ' '.join(variables)
                             rules += space * 3 + enemies[value + str(i)] + enemyTy[i - 1] + ' ' + variables \

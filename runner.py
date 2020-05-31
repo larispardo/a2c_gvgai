@@ -51,11 +51,14 @@ class Runner(object):
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones = [],[],[],[],[]
         mb_states = self.states
         for n in range(self.nsteps):
+
             actions, values, states, _ = self.model.step(self.obs, self.states, self.dones)
+
             mb_obs.append(np.copy(self.obs))
             mb_actions.append(actions)
             mb_values.append(values)
             mb_dones.append(self.dones)
+
             obs, rewards, dones, _ = self.env.step(actions)
             if self.render:
                 self.env.render()

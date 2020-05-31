@@ -5,14 +5,19 @@ from baselines import logger
 from baselines.common.atari_wrappers import *
 from baselines.common import set_global_seeds
 from baselines.bench import Monitor
+import gym
+import gym_gvgai
 
 
 
 def worker(remote, parent_remote, env_fn_wrapper, level_selector=None):
+    import gym
+    import gym_gvgai
     parent_remote.close()
     env = env_fn_wrapper.x()
     level_selector = level_selector
     level = None
+    forceNext = False
     score = 0
     finished = False
     last_mes = None
@@ -26,23 +31,35 @@ def worker(remote, parent_remote, env_fn_wrapper, level_selector=None):
             else:
                 ob, reward, done, info = env.step(data)
                 score += reward
-                if done:
+                if done or forceNext:
+                    forceNext = False
                     if level_selector is not None:
                         if level_selector.get_game() == "boulderdash":
                             level_selector.report(level, score >= 20)
                         else:
                             level_selector.report(level, False if info['winner'] == 'PLAYER_LOSES' else True)
                         level = level_selector.get_level()
+                        '''
                         if level_selector.get_selectorname() == "pcg-progressive-rules":
                             if level_selector.get_ifgameChanged():
                                 env_id = "gvgai-" + level_selector.get_game() + "-lvl0-v0"
                                 env.close()
                                 env = gym.make(env_id)
+                        '''
                         if level is not None:
                             env.unwrapped._setLevel(level)
                         else:
                             finished = True
-                    ob = env.reset()
+                    try:
+                        ob = env.reset()
+                    except:
+                        print("problem here:", level, level_selector.get_info)
+                        env_id = "gvgai-" + level_selector.get_game() + "-lvl0-v0"
+                        env.close()
+                        env = gym.make(env_id)
+                        forceNext = True
+                        continue
+
                     if finished:
                         last_mes = (ob, reward, False, info)
                     score = 0
